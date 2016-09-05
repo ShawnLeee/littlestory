@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../static/js/jquery-3.0.0.min.js"></script>
+    <script src="../static/js/index.js"></script>
+</head>
+<body>
+<div>
+    <form method="POST">
+        {{ form.csrf_token }}
+        {{ form.body.label }} {{ form.body }}
+        {{ form.submit() }}
+    </form>
+</div>
+<ul>
+    {% for post in posts %}
+    <li>
+        <div>{{ post.body }}</div>
+    </li>
+    {% endfor %}
+</ul>
+<h1>That's works</h1>
+<p>This is how I do!</p>
+</body>
+</html>
