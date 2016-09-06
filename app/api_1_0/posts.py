@@ -6,7 +6,7 @@ from . import api
 from flask import request
 from flask import jsonify
 from app import db
-from app.models import LSPost
+from app.models import LSPost, LSUser, LSResponse
 
 
 # @api.route('/post', methods=['GET'])
@@ -28,14 +28,14 @@ def get_comments():
     comments = Comment.query.get_or_404()
 
 
-@api.route('/posts/', methods=['POST'])
-def new_post():
-    story = request.form.get('story')
-    user_id = request.form.get('user_id')
-    post = QBPost.post_with(story=story, user_id=user_id)
-    db.session.add(post)
-    db.session.commit()
-    return jsonify(post.to_json())
+# @api.route('/posts/', methods=['POST'])
+# def new_post():
+#     story = request.form.get('story')
+#     user_id = request.form.get('user_id')
+#     post = QBPost.post_with(story=story, user_id=user_id)
+#     db.session.add(post)
+#     db.session.commit()
+#     return jsonify(post.to_json())
 
 
 @api.route('/upload',methods=['GET', 'POST'])
@@ -74,6 +74,11 @@ def create_post():
 
 @api.route('/posts/',methods=['GET','POST'])
 def get_posts():
+    token = request.form.get('token')
+    user_id = LSUser.verify_auth_token(token=token)
+    if user_id is None:
+        return jsonify(LSResponse(status=0,msg='token 验证失败').to_json())
+
     posts = LSPost.query.all()
     return jsonify({'posts': [post.to_json() for post in posts]})
 

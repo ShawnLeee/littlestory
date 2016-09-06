@@ -16,7 +16,8 @@ def register():
     db.session.add(luser)
     try:
         db.session.commit()
-        return jsonify(LSResponse(status=1,msg="注册成功").to_json())
+        data = {'token':luser.token}
+        return jsonify(LSResponse(status=1,msg="注册成功", data=data).to_json())
     except:
         return jsonify(LSResponse(status=0,msg="注册失败").to_json())
 

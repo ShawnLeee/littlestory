@@ -87,7 +87,16 @@ class LSUser(db.Model):
     follers_count = db.Column(db.Integer, default=0)
     friends_count = db.Column(db.Integer, default=0)
     gender = db.Column(db.String(1), default='m')
+    token = db.Column(db.String(255))
 
+    @staticmethod
+    def spider_create_user(user_id, user_name, avatar ,author_url):
+        lsuser = LSUser()
+        lsuser.user_id = user_id
+        lsuser.user_name = user_name
+        lsuser.avatar = avatar
+        lsuser.author_url = author_url
+        return lsuser
     @property
     def password(self):
         raise AttributeError('password is not a readable attribute')
@@ -103,19 +112,20 @@ class LSUser(db.Model):
     def create_user(user_name, password):
         luser = LSUser()
         luser.user_id = uuid4().hex
+        luser.token = luser.generate_auth_token(expiration=360000)
         luser.user_name = user_name
         luser.password = password
         return luser
 
     def generate_auth_token(self, expiration):
         s = Serializer(current_app.config['SECRET_KEY'], expires_in=expiration)
-        return s.dumps({'id',self.user_id})
+        return s.dumps({'id': self.user_id})
 
     @staticmethod
     def verify_auth_token(token):
-        s = Serializer(current_app['SECRET_KEY'])
+        s = Serializer(current_app.config['SECRET_KEY'])
         try:
-            data = s.load(token)
+            data = s.loads(token)
         except:
             return None
         return LSUser.query.get(data['id'])
@@ -129,6 +139,28 @@ class LSPost(db.Model):
     created_time = db.Column(db.DateTime, default=datetime.now())
     like_count = db.Column(db.Integer, default=0)
     comment_count = db.Column(db.Integer, default=0)
+
+
+    @classmethod
+    def post_with_article_soup(cls, article):
+        a_soup = article.find('li', class_='user-article-text').find('a')
+        article_text = a_soup.text.replace('\n', '')
+        article_id = a_soup['href'].split("/")[2]
+        article_stats = article.find('li', class_='user-article-stat')
+        article_create_time = article_stats.find('a').text.replace('\n', '')
+        article_stats_text = article_stats.text.split('\n')
+        stats = []
+        for com in article_stats_text:
+            for s in com.split():
+                if s.isdigit():
+                    stats.append(int(s))
+        post = cls()
+        post.post_text = article_text
+        post.post_id = article_id
+        post.like_count = stats[0]
+        post.comment_count = stats[1]
+        post.created_time = article_create_time
+        return post
 
     def to_json(self):
         json_post = {
@@ -160,6 +192,15 @@ class LSComment(db.Model):
     created_time = db.Column(db.DateTime, default=datetime.now())
     floor = db.Column(db.Integer, default=0)
 
+    @staticmethod
+    def spider_comment(comment_id=comment_id, user_id=user_id, post_id=post_id, comment_text=comment_text, floor=floor):
+        lscomment = LSComment()
+        lscomment.comment_id=comment_id
+        lscomment.user_id=user_id
+        lscomment.post_id=post_id
+        lscomment.comment_text=comment_text
+        lscomment.floor=floor
+        return lscomment
     @staticmethod
     def create_comment(user_id, post_id, comment_text):
         comment = LSComment()
