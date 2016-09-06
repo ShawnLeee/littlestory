@@ -74,13 +74,14 @@ def create_post():
 
 @api.route('/posts/',methods=['GET','POST'])
 def get_posts():
-    token = request.form.get('token')
-    user_id = LSUser.verify_auth_token(token=token)
-    if user_id is None:
-        return jsonify(LSResponse(status=0,msg='token 验证失败').to_json())
+    # token = request.form.get('token')
+    # user_id = LSUser.verify_auth_token(token=token)
+    # if user_id is None:
+    #     return jsonify(LSResponse(status=0,msg='token 验证失败').to_json())
 
-    posts = LSPost.query.all()
-    return jsonify({'posts': [post.to_json() for post in posts]})
+    posts = LSPost.query.order_by('created_time').all()
+    posts_data = {'posts': [post.to_json(with_user=True) for post in posts]}
+    return jsonify(LSResponse(status=1,msg='ok', data=posts_data).to_json())
 
 
 

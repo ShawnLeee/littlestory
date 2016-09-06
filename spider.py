@@ -10,12 +10,12 @@ app = Flask(__name__)
 app.config.from_object(config['release'])
 db = SQLAlchemy(app)
 spider = QBSpider()
-max_page = 5
+max_page = 15
 
 
 def main():
-    for i in range(1, max_page):
-        append_author_for_page(page=1)
+    for i in range(8, max_page):
+        append_author_for_page(page=i)
 
 
 def append_author_for_page(page=1):
@@ -51,6 +51,16 @@ def append_author_for_page(page=1):
                 continue
             print(u'插入%s评论列表...' % post.post_text)
             for comment in comments:
+                comment_user = spider.get_author(user_id=comment.user_id)
+                db.session.add(comment_user)
+                try:
+                    db.session.commit()
+                    print(u'评论%s用户%s插入成功' % (comment.comment_id, comment_user.user_name))
+                except:
+                    print(u'评论%s用户%s插入失败' % (comment.comment_id, comment_user.user_name))
+                    db.session.rollback()
+                    continue
+
                 db.session.add(comment)
                 try:
                     db.session.commit()

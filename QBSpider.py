@@ -86,6 +86,17 @@ class QBSpider(object):
             authors.append(user)
         return authors
 
+    def get_author(self, user_id):
+        user_url = QB_BASE_URL + '/users/' + user_id
+        user_page = self.soup_page_with_url(user_url)
+        userheader = user_page.find('a', class_='user-header-avatar')
+        avatar = userheader.find('img')['src']
+        user_name = userheader.find('img')['alt']
+        author_url = user_url
+
+        user = LSUser.spider_create_user(user_id=user_id, user_name=user_name, avatar=avatar, author_url=author_url)
+        return user
+
     def get_articles_for_author(self, author_url):
         """
         :type author_url: str

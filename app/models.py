@@ -89,6 +89,17 @@ class LSUser(db.Model):
     gender = db.Column(db.String(1), default='m')
     token = db.Column(db.String(255))
 
+    def to_json(self):
+        json_user = {
+            'user_id': self.user_id,
+            'user_name': self.user_name,
+            'avatar': self.avatar,
+            'article_count': self.article_count,
+            'folloers_count': self.follers_count,
+            'friends_count': self.friends_count,
+        }
+        return json_user
+
     @staticmethod
     def spider_create_user(user_id, user_name, avatar ,author_url):
         lsuser = LSUser()
@@ -162,7 +173,7 @@ class LSPost(db.Model):
         post.created_time = article_create_time
         return post
 
-    def to_json(self):
+    def to_json(self, with_user=False):
         json_post = {
             'post_id': self.post_id,
             'user_id': self.user_id,
@@ -172,6 +183,8 @@ class LSPost(db.Model):
             'comment_count': self.comment_count,
 
         }
+        if(with_user):
+            json_post['user'] = LSUser.query.filter_by(user_id=self.user_id).first().to_json()
         return json_post
 
     @staticmethod
