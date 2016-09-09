@@ -22,7 +22,7 @@ class DevelopmentConfig(Config):
     MAIL_URE_TLS = True
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
-    SQLALCHEMY_DATABASE_URI = 'mysql://root:myaws@127.0.0.1/qiubaiDB'
+    SQLALCHEMY_DATABASE_URI = 'mysql://root:123@127.0.0.1/qiubaiDB'
     SQLALCHEMY_TRACK_MODIFICATIONS = True
 
 class ReleaseConfig(Config):

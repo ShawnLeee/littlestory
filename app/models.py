@@ -1,7 +1,7 @@
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
 from flask_login import UserMixin
-from flask import current_app, request, url_for
+from flask import current_app, request, url_for, jsonify
 from . import login_manager
 from datetime import datetime
 from uuid import uuid4
@@ -173,7 +173,7 @@ class LSPost(db.Model):
         post.created_time = article_create_time
         return post
 
-    def to_json(self, with_user=False):
+    def to_json(self, with_user=True):
         json_post = {
             'post_id': self.post_id,
             'user_id': self.user_id,
@@ -224,14 +224,17 @@ class LSComment(db.Model):
         comment.created_time = datetime.now()
         return comment
 
-    def to_json(self):
+    def to_json(self, with_user=True):
         comment_json = {
             'comment_id': self.comment_id,
             'user_id': self.user_id,
             'post_id': self.post_id,
             'comment_text': self.comment_text,
             'created_time': self.created_time,
+            'floor': self.floor,
         }
+        if(with_user):
+            comment_json['user'] = LSUser.query.filter_by(user_id=self.user_id).first().to_json()
         return comment_json
 
 class LSResponse(object):
@@ -246,7 +249,7 @@ class LSResponse(object):
             'msg' : self.msg,
             'data': self.data,
         }
-        return res_json
+        return jsonify(res_json)
 
 
 

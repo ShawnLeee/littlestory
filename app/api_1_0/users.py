@@ -17,9 +17,9 @@ def register():
     try:
         db.session.commit()
         data = {'token':luser.token}
-        return jsonify(LSResponse(status=1,msg="注册成功", data=data).to_json())
+        return LSResponse(status=1,msg="注册成功", data=data).to_json()
     except:
-        return jsonify(LSResponse(status=0,msg="注册失败").to_json())
+        return LSResponse(status=0,msg="注册失败").to_json()
 
 @api.route('/login/', methods=['POST'])
 def login():

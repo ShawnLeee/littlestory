@@ -1,12 +1,11 @@
 # encoding: utf-8
 import os
 from config import allowed_file
-from config import DevelopmentConfig
 from . import api
 from flask import request
 from flask import jsonify
 from app import db
-from app.models import LSPost, LSUser, LSResponse
+from app.models import LSPost, LSUser, LSResponse, LSComment
 
 
 # @api.route('/post', methods=['GET'])
@@ -22,10 +21,10 @@ from app.models import LSPost, LSUser, LSResponse
 #     return jsonify({'posts': [post.to_json() for post in posts]})
 
 
-@api.route('/comments')
-def get_comments():
-    post_id = request.args.get('post_id')
-    comments = Comment.query.get_or_404()
+# @api.route('/comments')
+# def get_comments():
+#     post_id = request.args.get('post_id')
+#     comments = Comment.query.get_or_404()
 
 
 # @api.route('/posts/', methods=['POST'])
@@ -51,11 +50,11 @@ def upload_file():
             path = os.path.join(img_path,filename)
             file.save(path)
 
-
-@api.route('/users/', methods=['GET', 'POST'])
-def get_users():
-    users = QBUser.query.all()
-    return jsonify([user.to_json() for user in users])
+#
+# @api.route('/users/', methods=['GET', 'POST'])
+# def get_users():
+#     users = QBUser.query.all()
+#     return jsonify([user.to_json() for user in users])
 
 @api.route('/posts/create.json', methods=['POST'])
 def create_post():
@@ -81,7 +80,19 @@ def get_posts():
 
     posts = LSPost.query.order_by('created_time').all()
     posts_data = {'posts': [post.to_json(with_user=True) for post in posts]}
-    return jsonify(LSResponse(status=1,msg='ok', data=posts_data).to_json())
+    return LSResponse(status=1,msg='ok', data=posts_data).to_json()
+
+@api.route('/article/', methods=['POST', 'GET'])
+def get_artilce():
+    article_id = request.args.get('article_id')
+    post = LSPost.query.filter_by(post_id=article_id).first()
+    if post is None:
+        return LSResponse(status=0, msg=u'There is no article {0:s}'.format(article_id)).to_json()
+
+    comments = LSComment.query.filter_by(post_id=article_id).order_by('floor').all()
+    article_data = {'post':post.to_json(), 'comments':[comment.to_json() for comment in comments]}
+    return LSResponse(status=1, msg='ok', data= article_data).to_json()
+
 
 
 

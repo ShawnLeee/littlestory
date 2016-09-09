@@ -19,5 +19,12 @@ def create_comment():
         return jsonify({"status":0, 'msg':'评论失败'})
 
 
+@api.route('/comments.json', methods=['GET'])
+def get_post_comments():
+    post_id = request.args.get('post_id')
+    comments = LSComment.query.filter_by(post_id=post_id).order_by('floor').all()
+    return jsonify({'comments':[comment.to_json() for comment in comments]})
+
+
 
 
