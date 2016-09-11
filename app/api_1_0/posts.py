@@ -103,6 +103,10 @@ def like_it():
         return LSResponse(status=0, msg='like must be 1 or -1')
 
     post = LSPost.query.filter_by(post_id=post_id).first()
+
+    if post is None:
+        return LSResponse(status=0, msg='There is no post with post_id: %s' % post_id)
+
     if like_count == 1 or like_count == -1:
         post.like_count += like_count
         try:
