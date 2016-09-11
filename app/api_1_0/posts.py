@@ -93,6 +93,30 @@ def get_artilce():
     article_data = {'post':post.to_json(), 'comments':[comment.to_json() for comment in comments]}
     return LSResponse(status=1, msg='ok', data= article_data).to_json()
 
+@api.route('/likeit/', methods=['GET'])
+def like_it():
+    post_id = request.args.get('post_id')
+    like = request.args.get('like')
+    try:
+        like_count = int(like)
+    except:
+        return LSResponse(status=0, msg='like must be 1 or -1')
+
+    post = LSPost.query.filter_by(post_id=post_id).first()
+
+    if post is None:
+        return LSResponse(status=0, msg='There is no post with post_id: %s' % post_id)
+
+    if like_count == 1 or like_count == -1:
+        post.like_count += like_count
+        try:
+            db.session.commit()
+        except:
+            return LSResponse(status=0, msg='like failed')
+    else:
+        return LSResponse(status=0, msg='like must be 1 or -1')
+
+    return LSResponse(status=1, msg='ok').to_json()
 
 
 

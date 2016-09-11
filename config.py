@@ -26,7 +26,7 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_TRACK_MODIFICATIONS = True
 
 class ReleaseConfig(Config):
-    SQLALCHEMY_DATABASE_URI = 'mysql://root:myaws@52.43.221.136/qiubaiDB'
+    SQLALCHEMY_DATABASE_URI = 'mysql://root:123@127.0.0.1/qiubaiDB'
     SQLALCHEMY_TRACK_MODIFICATIONS = True
 
 def allowed_file(filename):
