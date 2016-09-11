@@ -10,12 +10,64 @@ app = Flask(__name__)
 app.config.from_object(config['release'])
 db = SQLAlchemy(app)
 spider = QBSpider()
-max_page = 15
+max_page = 20
 
 
 def main():
-    for i in range(8, max_page):
-        append_author_for_page(page=i)
+    #获取糗事及作者
+    for page in range(max_page):
+        print("处理第%d页的糗事..." % page)
+        posts = spider.get_articles(page=page)
+        user_ids = [post.get('user').user_id for post in posts]
+        print("第%d页共有%d件糗事" % (page, len(posts)) )
+        for post in posts:
+            user = post.get('user')
+            post = post.get('post')
+            try:
+                db.session.add(user)
+                db.session.commit()
+                print('User insert success')
+            except Exception as e:
+                print('User inser error:%s' % e)
+                db.session.rollback()
+                continue
+
+            try:
+                db.session.add(post)
+                db.session.commit()
+                print('Post insert success')
+            except Exception as e:
+                print('Post insert failed:%s' % e)
+                db.session.rollback()
+                continue
+
+
+            print('Search comments for post %s ' % post.post_id)
+            comments = spider.get_article_comments(post=post)
+            print('Process comments...')
+            for comment in comments:
+                append_comment(comment, user_ids)
+
+def append_comment(comment, user_ids):
+
+    comment_user = comment.get('user')
+    comment_content = comment.get('comment')
+    if comment_user.user_id not in user_ids:
+        try:
+            db.session.add(comment_user)
+            db.session.commit()
+        except Exception as e:
+            print('Comment user insert error')
+            db.session.rollback()
+            return
+    try:
+        db.session.add(comment_content)
+        db.session.commit()
+        print('Comment insert success')
+    except Exception as e:
+        print('Comment insert failed')
+        db.session.rollback()
+        return
 
 
 def append_author_for_page(page=1):

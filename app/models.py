@@ -120,12 +120,17 @@ class LSUser(db.Model):
         return check_password_hash(self.password_hash, password)
 
     @staticmethod
-    def create_user(user_name, password):
+    def create_user(user_name, password=None, user_id=None, avatar=None):
         luser = LSUser()
-        luser.user_id = uuid4().hex
-        luser.token = luser.generate_auth_token(expiration=360000)
+        if user_id is not None:
+            luser.user_id = user_id
+        else:
+            luser.user_id = uuid4().hex
+        # luser.token = luser.generate_auth_token(expiration=360000)
         luser.user_name = user_name
-        luser.password = password
+        luser.avatar = avatar
+        if password is not None:
+            luser.password = password
         return luser
 
     def generate_auth_token(self, expiration):
@@ -188,12 +193,18 @@ class LSPost(db.Model):
         return json_post
 
     @staticmethod
-    def create_post(user_id, post_text):
+    def create_post(user_id, post_text, post_id, like_count=0, comment_count=0):
         lspost = LSPost()
-        lspost.post_id = uuid4().hex
+        if post_id is not None:
+            lspost.post_id = post_id
+        else:
+            lspost.post_id = uuid4().hex
         lspost.user_id = user_id
         lspost.post_text = post_text
+        lspost.like_count = like_count
+        lspost.comment_count = comment_count
         return lspost
+
 
 
 class LSComment(db.Model):

@@ -30,7 +30,7 @@ class QBSpider(object):
 
     def get_page(self, page_index):
         try:
-            url = 'http://www.qiushibaike.com/8hr/page/' + str(page_index)
+            url = 'http://www.qiushibaike.com/hot/page/' + str(page_index)
             request = urllib2.Request(url, headers=self.headers)
             response = urllib2.urlopen(request)
             page_code = response.read().decode('utf-8')
@@ -86,6 +86,20 @@ class QBSpider(object):
             authors.append(user)
         return authors
 
+    def get_user_for_soup_page(self, posts_soup_page):
+        user = posts_soup_page.find('div', class_='author').find('a', rel='nofollow')
+        try:
+            author_url = QB_BASE_URL + user['href']
+            user_name = user.find('img')['alt'].encode('utf8')
+            user_id = user['href'].split('/')[2]
+            avatar = user.find('img')['src']
+        except Exception as e:
+            print('get user error')
+            raise LookupError
+        lsuser = LSUser.spider_create_user(user_id=user_id, user_name=user_name , avatar=avatar, author_url=author_url)
+        return lsuser
+
+
     def get_author(self, user_id):
         user_url = QB_BASE_URL + '/users/' + user_id
         user_page = self.soup_page_with_url(user_url)
@@ -133,8 +147,10 @@ class QBSpider(object):
             return comments
         for comment_soup in comment_soup_list:
             try:
-                comment_id = comment_soup['id'][len('comment-'):]
                 user_id = comment_soup.find('a', rel='nofollow')['href'].split('/')[2]
+                avatar = comment_soup.find('div', class_='avatars').find('img')['src']
+                user_name = comment_soup.find('div', class_='replay').find('a').text
+                comment_id = comment_soup['id'][len('comment-'):]
                 post_id = post.post_id
                 comment_text = comment_soup.find('span', class_='body').text.encode('utf8')
                 floor = comment_soup.find('div', class_='report').text
@@ -142,7 +158,9 @@ class QBSpider(object):
                 continue
             # comment = Comment(comment_id=comment_id, user_id=user_id, post_id=post_id, comment_text=comment_text, floor=floor)
             comment = LSComment(comment_id=comment_id, user_id=user_id, post_id=post_id, comment_text=comment_text, floor=floor)
-            comments.append(comment)
+            lsuser = LSUser.create_user(user_name=user_name, avatar=avatar, user_id=user_id)
+
+            comments.append({'user': lsuser, 'comment': comment})
         return comments
 
 
@@ -168,31 +186,35 @@ class QBSpider(object):
             posts.append(post)
         return posts
 
-    @staticmethod
-    def get_articles(page):
+    def get_articles(self, page=1):
         """
         :type page: str
         """
+        page =  self.get_page(page_index=page)
         posts = []
         soup = BeautifulSoup(page, 'lxml')
         articles = soup.find_all('div', class_='article block untagged mb15')
         for div_a in articles:
-            post = post_with_soup(div_a)
+            post = self.post_with_soup(div_a)
             posts.append(post)
         return posts
 
 
-def post_with_soup(post_soup):
+    def post_with_soup(self, post_soup):
+        post_user = self.get_user_for_soup_page(post_soup)
 
-    author_name = post_soup.find('div', class_='author').find('h2').text
-    author = Author(user_name=author_name)
+        post_text = post_soup.find_all('div', class_='content')[0].text.replace('\n', '').encode('utf8')
+        like_count = post_soup.find('span', class_='stats-vote').find('i').text
+        comment_count = post_soup.find('span', class_='stats-comments').find('i').text
+        post_id = post_soup.find('a', class_='contentHerf')['href'].split('/')[2]
+        lspost = LSPost.create_post(user_id=post_user.user_id,
+                                    post_id=post_id,
+                                    post_text=post_text,
+                                    like_count=like_count,
+                                    comment_count=comment_count
+                                    )
 
-    post = QBPost()
-    post.post_text = post_soup.find_all('div', class_='content')[0].text.replace('\n', '').encode('utf8')
-    post.like_count = post_soup.find('span', class_='stats-vote').find('i').text
-    post.comment_count = post_soup.find('span', class_='stats-comments').find('i').text
-    post.author = author
-    return post
+        return {'user':post_user, 'post':lspost}
 
 
 def insert_post(page):
